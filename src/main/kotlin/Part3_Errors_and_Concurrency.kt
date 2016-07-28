@@ -9,7 +9,7 @@ import java.util.regex.Pattern
 
 // See see http://blog.danlew.net/2014/09/22/grokking-rxjava-part-2/
 
-fun getUrls(): Observable<List<String>> = Observable.just(listOf("http://www.heise.de", "http://www.golem.de", "http://www.arstechnica.com", "http://unkown_url"))
+fun getUrls(): Observable<List<String>> = Observable.just(listOf("http://www.heise.de", "http://www.golem.de", "http://www.arstechnica.com", "http://unkown_url", "http://wired.com"))
 
 
 fun readTitle(urlStr: String): String? = grepTitle(readUrl(urlStr)) + " " +Thread.currentThread().getName()
@@ -32,18 +32,23 @@ fun printUrls() {
 
 // Check http://tomstechnicalblog.blogspot.de/2015/11/rxjava-achieving-parallelization.html
 
+fun <T> Observable<T>.debug(s: String): Observable<T> = this.doOnNext({println("onNext $s: ${it} - [${Thread.currentThread().getName()}]")})
+
 fun printTitles() {
     val urlListObservable: Observable<List<String>> = getUrls() // Observable with a list of urls
     urlListObservable.flatMap { Observable.from(it) }// Observable emitting individual urls
-        .flatMap { Observable.just(it)
-                .subscribeOn(Schedulers.io())
-                .map { readTitle(it) }
-                .filter { it != null }
-        }
-        .subscribe(
-                { println("Url: $it") }, // onNext
-                { println("Error reading url") }, // onError
-                { println("Done") }) // onCompleted
+            .debug("flatMap Url")
+        .flatMap { Observable.just(it) }
+            .debug("list")
+        .subscribeOn(Schedulers.io())
+            .debug("subscribeOn io")
+        .map { readTitle(it) }
+            .debug("map read title")
+            .onErrorReturn { null }
+            .debug("onError null")
+        .filter { it != null }
+            .debug("filter null")
+        .toBlocking().forEach { println("Url: $it") }
 }
 
 fun showThreads() {

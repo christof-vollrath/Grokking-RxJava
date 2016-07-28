@@ -1,4 +1,5 @@
-import io.kotlintest.properties.Table2
+package net.taobits.grokking_rxjava.part3
+
 import io.kotlintest.specs.FunSpec
 
 class Part2_flatMapUrls_test : FunSpec() { init {
@@ -16,6 +17,5 @@ class Part2_flatMapUrls_test : FunSpec() { init {
         forAll(textTab) { text, title ->
             grepTitle(text) shouldBe title
         }
-
     }
 }}

@@ -30,9 +30,7 @@ fun printUrls() {
     val urlsObservable: Observable<String> = urlListObservable.flatMap { // Observable emitting individual urls
         Observable.from(it)
     }
-    //urlsObservable.subscribe {
-    //    println("Url: $it")
-    //}
+    //urlsObservable.subscribe { println("Url: $it") }
     urlsObservable.toBlocking().forEach { println("Url: $it") }
 }
 
@@ -45,23 +43,22 @@ fun printTitles() {
     val urlList: Observable<List<String>> = Observable.just(getUrls()) // Observable with a list of urls
     val urls: Observable<String> = urlList.flatMap { Observable.from(it) }// Observable emitting individual urls
                                     .debug("flatMap Url")
-    val titles: Observable<String?> = urls.concatMap {
+    val titles: Observable<String?> = urls.flatMap {
                     Observable.just(it)
                     .observeOn(Schedulers.computation())
                     .debug("observeOn computation")
                     .map {readTitle(it)}
                     .debug("map readTitle")
+                    .onErrorReturn { null }
+                    .debug("onError null")
             }
-            .debug("concatMap parallel")
+            .debug("flatMap parallel")
             .observeOn(Schedulers.io())
             .debug("observeOn io")
-    val titlesWithoutErrors: Observable<String?> = titles.onErrorReturn { null }
-                                        .debug("onError null")
-                                        .filter { it != null }
+    val titlesWithoutErrors: Observable<String?> = titles.filter { it != null }
                                         .debug("filter null")
     titlesWithoutErrors.toBlocking().forEach { println("Url: $it") }
     println("Took ${System.currentTimeMillis()-startTime} ms")
-    //Thread.sleep(10000)
 }
 
 
